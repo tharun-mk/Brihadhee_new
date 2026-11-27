@@ -1,0 +1,132 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { facts } from '../../data/brand-facts';
+import { ok, telHref, fullAddress } from '../../lib/facts';
+import { cateringReady, waDigits, CATERING_CRUMB } from '../../lib/catering';
+
+const c = facts.catering;
+const path = '/catering/quote/';
+const title = 'Get a Catering Quote in Chennai on WhatsApp | Brihadhee';
+const description = 'Ask Brihadhee for a vegetarian catering quote in Chennai. Fill in six details about your event and send them on WhatsApp. Catering starts at 50 guests.';
+const tel = telHref();
+const wa = waDigits();
+const min = c.minimumGuests ?? 1;
+const field = 'block w-full mt-1 border-2 border-sand rounded-lg p-3 bg-white';
+const eventTypes = ['Office lunch (daily)', 'Office event', 'Birthday', 'Get-together', 'Family function', 'Wedding', ...c.extraEventTypes, 'Other'];
+---
+<BaseLayout title={title} description={description} path={path} noindex={!cateringReady.quote()} breadcrumbs={[CATERING_CRUMB, { name: 'Get a quote', href: path }]}>
+  <div class="wrap py-6 max-w-3xl prose-b" style="margin-inline:auto">
+    <h1>Get a catering quote on WhatsApp</h1>
+    <p class="text-lg">Fill in six details about your event and tap <strong>Send on WhatsApp</strong>. WhatsApp opens with your answers ready to send, and {facts.name}'s catering team replies with a menu and a quote{ok(c.replyTime) && <> {c.replyTime}</>}.{c.minimumGuests && <> Catering starts at {c.minimumGuests} guests</>}{c.minimumGuests ? ', and all' : ' All'} our food is vegetarian.</p>
+
+    {wa ? (
+      <form id="quote-form" class="card mt-6 grid gap-4" data-wa={wa} data-min={min} data-name={facts.name} novalidate>
+        <div>
+          <label for="q-event" class="font-semibold">Event type</label>
+          <select id="q-event" name="event" required class={field}>
+            <option value="">Choose one</option>
+            {eventTypes.map((e) => <option value={e}>{e}</option>)}
+          </select>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div><label for="q-date" class="font-semibold">Date</label><input id="q-date" name="date" type="date" required class={field} /></div>
+          <div><label for="q-guests" class="font-semibold">Number of guests</label><input id="q-guests" name="guests" type="number" inputmode="numeric" min={min} required class={field} /></div>
+        </div>
+        <fieldset>
+          <legend class="font-semibold">Lunch or dinner</legend>
+          <div class="flex flex-wrap gap-4 mt-1">
+            <label><input type="radio" name="meal" value="Lunch" required /> Lunch</label>
+            <label><input type="radio" name="meal" value="Dinner" /> Dinner</label>
+            <label><input type="radio" name="meal" value="Both" /> Both</label>
+          </div>
+        </fieldset>
+        <div><label for="q-dishes" class="font-semibold">Dishes you must have</label><textarea id="q-dishes" name="dishes" rows="3" required placeholder="For example: sambar, payasam, kothu parotta" class={field}></textarea></div>
+        {c.serviceStaffOptional && (
+          <fieldset>
+            <legend class="font-semibold">Service staff needed?</legend>
+            <div class="flex flex-wrap gap-4 mt-1">
+              <label><input type="radio" name="service" value="Yes" required /> Yes</label>
+              <label><input type="radio" name="service" value="No" /> No</label>
+              <label><input type="radio" name="service" value="Not sure" /> Not sure</label>
+            </div>
+          </fieldset>
+        )}
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div><label for="q-name" class="font-semibold">Your name (optional)</label><input id="q-name" name="name" autocomplete="name" class={field} /></div>
+          <div><label for="q-area" class="font-semibold">Venue area (optional)</label><input id="q-area" name="area" placeholder="For example: Anna Nagar West" class={field} /></div>
+        </div>
+        <div><label for="q-budget" class="font-semibold">Budget (optional)</label><input id="q-budget" name="budget" class={field} /></div>
+        <button type="submit" class="btn btn-primary">Send on WhatsApp</button>
+        <p id="quote-status" role="status" aria-live="polite" class="font-semibold"></p>
+      </form>
+    ) : (
+      <div class="card mt-6">
+        <p style="margin:0">Online catering quotes open soon.{tel && <> Until then, call us on <a href={tel} data-event="call_click" data-label="catering-quote">{facts.phone}</a> with your date, headcount and the dishes you want.</>}</p>
+      </div>
+    )}
+
+    <h2>What happens after I send it?</h2>
+    <p>Our catering team reads your details and replies on WhatsApp with a suggested menu and a price{ok(c.replyTime) && <> {c.replyTime}</>}. Nothing is booked until you confirm.</p>
+
+    <h2>Is my information stored?</h2>
+    <p>No. This form does not save anything on our website. It only opens WhatsApp on your phone with your answers filled in, and you choose whether to send them.</p>
+
+    <h2>Would you rather call?</h2>
+    {tel
+      ? <p>Ring <a href={tel} data-event="call_click" data-label="catering-quote-bottom">{facts.phone}</a> or visit us at {fullAddress()}.</p>
+      : <p>Visit us at {fullAddress()}.</p>}
+    <p>Not sure what you need yet? Read about <a href="/catering/">{facts.name} catering</a>, <a href="/catering/small-functions/">small functions</a> or <a href="/catering/corporate/">corporate catering</a>.</p>
+  </div>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('quote-form') as HTMLFormElement | null;
+  if (form) {
+    const wa = form.dataset.wa!;
+    const min = Number(form.dataset.min || '1');
+    const name = form.dataset.name || '';
+    const status = document.getElementById('quote-status')!;
+    const date = form.querySelector<HTMLInputElement>('#q-date');
+    if (date) date.min = new Date().toISOString().slice(0, 10);
+    const val = (n: string) => {
+      const el = form.elements.namedItem(n) as HTMLInputElement | RadioNodeList | null;
+      return el ? String((el as HTMLInputElement).value ?? '').trim() : '';
+    };
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const guests = Number(val('guests'));
+      if (val('guests') && guests < min) {
+        status.innerHTML = `Our catering starts at ${min} guests. For a smaller group, come and eat with us at the restaurant: see <a href="/events/group-dining/">group dining</a>.`;
+        return;
+      }
+      const required = ['event', 'date', 'guests', 'meal', 'dishes', ...(form.querySelector('[name="service"]') ? ['service'] : [])];
+      const missing = required.filter((n) => !val(n));
+      if (missing.length) {
+        status.textContent = 'Please fill in the event type, date, number of guests, lunch or dinner, the dishes you must have and service staff.';
+        return;
+      }
+      const d = new Date(val('date') + 'T00:00:00');
+      const dateText = isNaN(d.getTime()) ? val('date') : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      const utm = new URLSearchParams(location.search).get('utm_source');
+      const lines = [
+        `Hello ${name}, I'd like a catering quote.`,
+        `Event: ${val('event')}`,
+        `Date: ${dateText}`,
+        `Guests: ${guests}`,
+        `Meal: ${val('meal')}`,
+        `Must-have dishes: ${val('dishes')}`,
+        val('service') && `Service staff: ${val('service')}`,
+        val('name') && `Name: ${val('name')}`,
+        val('area') && `Venue area: ${val('area')}`,
+        val('budget') && `Budget: ${val('budget')}`,
+        `(sent from ${location.host}${location.pathname}${utm ? `, source: ${utm}` : ''})`,
+      ].filter(Boolean);
+      const bucket = guests < 100 ? '50-99' : guests < 250 ? '100-249' : guests < 500 ? '250-499' : '500+';
+      const gtag = (window as any).gtag;
+      gtag?.('event', 'quote_submit', { page_path: location.pathname, event_type: val('event'), guests_bucket: bucket });
+      gtag?.('event', 'whatsapp_click', { page_path: location.pathname, link_label: 'catering-quote' });
+      status.textContent = 'Opening WhatsApp...';
+      location.href = `https://wa.me/${wa}?text=${encodeURIComponent(lines.join('\n'))}`;
+    });
+  }
+</script>

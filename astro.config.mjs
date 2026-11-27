@@ -1,16 +1,25 @@
-import { defineConfig } from "astro/config";
-import { SITE_ORIGIN } from "./src/data/entity-truth.ts";
+import { defineConfig } from 'astro/config';
+import mdx from '@astrojs/mdx';
+import sitemap from '@astrojs/sitemap';
+import tailwindcss from '@tailwindcss/vite';
+import { loadEnv } from 'vite';
 
-// Static site. Every page is pre-rendered to HTML at build time.
+const env = { ...loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), ''), ...process.env };
+const site = (env.PUBLIC_SITE_URL || 'https://brihadhee.example').replace(/\/$/, '');
+
 export default defineConfig({
-  // Canonical production origin (custom domain on Vercel). GitHub Pages was turned
-  // off on 2026-11-11, so every build (Vercel, CI, local) uses the root base path.
-  site: SITE_ORIGIN,
-  base: "/",
-  output: "static",
-  trailingSlash: "always",
-  build: {
-    inlineStylesheets: "always",
-  },
-  compressHTML: true,
+  site,
+  output: 'static',
+  trailingSlash: 'always',
+  build: { format: 'directory', inlineStylesheets: 'auto' },
+  integrations: [
+    mdx(),
+    sitemap({
+      // Static exclusions. Draft / noindex pages are pruned afterwards by scripts/postbuild-sitemap.mjs,
+      // which reads the rendered HTML (the source of truth) and adds lastmod from each page's frontmatter.
+      filter: (page) => !/\/(thank-you|404)\/?$/.test(page),
+      i18n: { defaultLocale: 'en', locales: { en: 'en-IN', ta: 'ta-IN' } },
+    }),
+  ],
+  vite: { plugins: [tailwindcss()] },
 });

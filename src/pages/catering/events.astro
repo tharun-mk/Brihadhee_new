@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { facts } from '../../data/brand-facts';
+import { ok } from '../../lib/facts';
+import { cateringReady, cateringServiceSchema, fromMin, listText, CATERING_CRUMB } from '../../lib/catering';
+
+const c = facts.catering;
+const path = '/catering/events/';
+const title = 'Vegetarian Event Catering in Chennai | Brihadhee Anna Nagar';
+const description = 'Vegetarian catering for birthdays, get-togethers and family events in Chennai, from 50 guests. Brihadhee plans, cooks and serves. Get a WhatsApp quote.';
+const schema = [cateringServiceSchema(path, 'Event catering in Chennai', `Vegetarian catering for birthdays, get-togethers and family events in ${facts.city}, ${fromMin()}. Menu planning, cooking, delivery and optional service staff.`)];
+---
+<BaseLayout title={title} description={description} path={path} noindex={!cateringReady.events()} breadcrumbs={[CATERING_CRUMB, { name: 'Events', href: path }]} schema={schema}>
+  <div class="wrap py-6 max-w-3xl prose-b" style="margin-inline:auto">
+    <h1>Event catering in Chennai for birthdays and get-togethers</h1>
+    <p class="text-lg">{facts.name} caters vegetarian food for birthdays, get-togethers and family events in {facts.city}{c.minimumGuests && <>, from {c.minimumGuests} guests</>}. We plan the menu, cook it in our {facts.locality} kitchen and bring it to you{c.serviceStaffOptional && <>, with service staff if you want them</>}. Send your date and headcount for a quote on WhatsApp.</p>
+
+    <h2>Which events do you cater?</h2>
+    <ul>
+      <li>Birthday parties</li>
+      <li>Get-togethers and reunions</li>
+      <li>Family events and functions</li>
+      <li>Weddings; see <a href="/catering/weddings/">wedding catering</a></li>
+      {c.extraEventTypes.map((x) => <li>{x}</li>)}
+    </ul>
+
+    <h2>Lunch or dinner?</h2>
+    <p>Both. Tell us which on the quote form, because the menu often changes with the time of day.</p>
+
+    <h2>What will you serve?</h2>
+    <p>The same Tamil home-style vegetarian cooking as our restaurant.{c.dishes.length > 0 && <> Catering dishes include {listText(c.dishes)}.</>}</p>
+    {c.liveDosaCounter === true && (
+      <>
+        <h3>Can we have a live dosa counter?</h3>
+        <p>Yes. Bring {facts.name}'s build-your-own dosa to your event. Guests pick a batter, a topping, a stuffing and a garnish, and the dosa is made in front of them. It works well for birthdays, because children and adults pick their own. Read how <a href="/menu/dosa/">build-your-own dosa</a> works.</p>
+      </>
+    )}
+
+    {c.serviceStaffOptional && (
+      <>
+        <h2>Do you provide service staff?</h2>
+        <p>If you want them. Tick "service needed" on the quote form and we include staff in the quote. If you prefer to serve it yourselves, we deliver the food ready to serve.</p>
+      </>
+    )}
+
+    <h2>How many guests can you cater for?</h2>
+    <p>{c.minimumGuests && <>From {c.minimumGuests} guests.</>}{ok(c.maxGuestsPerDay) && <> We can cater for up to {c.maxGuestsPerDay} guests on one day.</>} Planning for 50 to 150 people? See <a href="/catering/small-functions/">small function catering</a>.</p>
+
+    <h2>How much does event catering cost?</h2>
+    <p>It depends on the headcount, the menu, lunch or dinner, the occasion and whether you want service staff. We quote after you send these details. There is no fixed per-plate price.</p>
+
+    <h2>How early should I book?</h2>
+    <p>As soon as your date is fixed, especially for festival weekends and the wedding season from mid-January.{ok(c.leadTimeSentence) && <> {c.leadTimeSentence}</>}</p>
+
+    <p>Catering for a company instead? See <a href="/catering/corporate/">corporate catering</a>, or read how <a href="/catering/">{facts.name} catering</a> works.</p>
+    <p><a class="btn btn-primary" href="/catering/quote/" data-event="catering_quote_click" data-label="events">Get a catering quote</a></p>
+  </div>
+</BaseLayout>

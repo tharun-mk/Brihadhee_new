@@ -1,20 +1,10 @@
-.commandcode/
 node_modules/
 dist/
+dist-draft/
+dist-fixture/
 .astro/
-.output/
-.vercel/
-.netlify/
-*.log
-.DS_Store
 .env
 .env.*
 !.env.example
-*.pdf
-Color.jpg.jpeg
-V09.jpg.jpeg
-V09-removebg-preview.png
-WhatsApp Image *.jpeg
-WhatsApp Audio *
-Ho.md
-Key.md
+.indexnow-manifest.json
+*.log

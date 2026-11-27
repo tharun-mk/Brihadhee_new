@@ -1,59 +1,109 @@
 ---
-/**
- * Home: brand hub, following the on-page blueprint of 2026-11-11. Required H2s,
- * in order: Customized Dosa, Your Way (was "Build Your Own Dosa, Your Way"; client
- * direction 2026-11-13); Lunch; Dinner Until 11 PM; Coffee Bar; Catering for Offices and Events;
- * Why Guests Choose Brihadhee; What Guests Say; Visit Us in Anna Nagar; Quick
- * Answers. The full menu (every dish in the HTML, checked by aeo-lint and verify),
- * offers and gallery sit between "Why" and "What Guests Say". Contact and Careers
- * (client direction 2026-11-13) close the page.
- */
-import Base from "../layouts/Base.astro";
-import Nav from "../components/Nav.astro";
-import Hero from "../components/Hero.astro";
-import AtAGlance from "../components/AtAGlance.astro";
-import ContentSection from "../components/ContentSection.astro";
-import About from "../components/About.astro";
-import Offers from "../components/Offers.astro";
-import MenuSection from "../components/MenuSection.astro";
-import Gallery from "../components/Gallery.astro";
-import Reviews from "../components/Reviews.astro";
-import Visit from "../components/Visit.astro";
-import Faq from "../components/Faq.astro";
-import Contact from "../components/Contact.astro";
-import Careers from "../components/Careers.astro";
-import Footer from "../components/Footer.astro";
-import KolamDivider from "../components/KolamDivider.astro";
-import { homePage as page } from "../data/pages.js";
-import { ROUTES, href, site, HERO_IMAGE_SIZES } from "../data/site.js";
----
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FactStrip from '../components/FactStrip.astro';
+import FAQ from '../components/FAQ.astro';
+import Photo from '../components/Photo.astro';
+import { facts } from '../data/brand-facts';
+import { answerSummary, dietLabel, telHref, directionsUrl, ok, hoursText } from '../lib/facts';
+import { restaurantSchema, faqSchema } from '../lib/schema';
+import { faqsFor } from '../data/faq';
+import { pathLive } from '../data/menu';
 
-<Base
-  title={page.title}
-  description={page.description}
-  preloadImage={{ ...site.media.hero, sizes: HERO_IMAGE_SIZES }}
-  ogDescription={`Brihadhee: dosas made your way, pot-cooked Paanai Parotta, Nellai sodhi meals and filter coffee. Pure veg lunch and dinner on 3rd Avenue, Anna Nagar East.`}
->
-  <Nav />
-  <main id="main" tabindex="-1">
-    <Hero h1={page.h1} coffeeBarId={page.coffeeBar.id} />
-    <AtAGlance rows={page.glance} lead={page.answer} />
-    <ContentSection {...page.byo} />
-    <ContentSection {...page.lunch} />
-    <ContentSection {...page.dinner} />
-    <ContentSection {...page.coffeeBar} />
-    {page.catering && <ContentSection {...page.catering} />}
-    <KolamDivider />
-    <About />
-    <MenuSection />
-    <Offers />
-    <Gallery />
-    <Reviews />
-    <Visit />
-    <KolamDivider />
-    <Faq title="Quick Answers" eyebrow="FAQ" moreHref={href(ROUTES.faq)} />
-    <Contact />
-    <Careers />
-  </main>
-  <Footer addressHref="#visit" />
-</Base>
+const pure = facts.dietClaim === 'pure-veg';
+const diet = dietLabel();
+const title = pure ? 'Brihadhee | Pure Veg South Indian Restaurant, Anna Nagar' : 'Brihadhee | South Indian Restaurant, Anna Nagar, Chennai';
+const description = `Brihadhee: ${diet ? diet + ' ' : ''}South Indian restaurant at W Block Main Road, 3rd Avenue, Anna Nagar, Chennai. Dosa, mini tiffin, Nellai meals and filter coffee.`;
+const h1 = `${facts.name} — ${pure ? 'Pure Veg ' : ''}South Indian Restaurant in Anna Nagar, Chennai`;
+const tel = telHref();
+const faqs = faqsFor('/', 5);
+const hours = hoursText();
+const cards = [
+  { path: '/menu/dosa/', photo: 'home-dosa', label: 'Photo: a freshly made dosa with chutneys, 1600x1200', alt: 'Dosa served with chutneys and sambar', title: 'Dosa, and build your own', text: ok(facts.dosaCount) ? `${facts.dosaCount} dosa varieties. Or build your own: choose a batter, a topping, a stuffing and a garnish.` : 'Build your own dosa: choose a batter, a topping, a stuffing and a garnish, or pick from the dosa variety on the menu.' },
+  { path: '/menu/mini-tiffin/', photo: 'home-mini-tiffin', label: 'Photo: mini tiffin plate, 1600x1200', alt: 'Mini tiffin plate with several South Indian tiffin items', title: 'Mini tiffin', text: 'A small-portion plate to taste several tiffin items in one order.' },
+  { path: '/menu/nellai-meals/', photo: 'home-nellai-meals', label: 'Photo: Nellai meals on a banana leaf, 1600x1200', alt: 'A South Indian meal on a banana-leaf plate with rice, papad, sambar, rasam, curries and curd', title: 'Nellai meals', text: 'Tirunelveli-style meals in the home-cooking style of southern Tamil Nadu, including the Nellai special sodhi meals.' },
+];
+---
+<BaseLayout title={title} description={description} path="/" schema={[restaurantSchema(), faqSchema(faqs)]}>
+  <section class="wrap pt-8 pb-6">
+    <h1>{h1}</h1>
+    <p class="mt-3 text-lg max-w-3xl" data-answer>{answerSummary()}</p>
+    {hours && <p class="mt-2 font-semibold" data-today hidden></p>}
+    {hours && <script type="application/json" id="hours-data" set:html={JSON.stringify(facts.hours)} />}
+    <div class="mt-5 flex flex-wrap gap-3">
+      <a class="btn btn-primary" href="/order/" data-event="order_click" data-label="hero">Order</a>
+      <a class="btn btn-accent" href="/book-a-table/" data-event="book_click" data-label="hero">Book a table</a>
+      {tel && <a class="btn" href={tel} data-event="call_click" data-label="hero">Call</a>}
+      <a class="btn" href={directionsUrl()} target="_blank" rel="noopener" data-event="directions_click" data-label="hero">Directions</a>
+    </div>
+    <div class="mt-6"><FactStrip /></div>
+  </section>
+
+  <div class="wrap"><div class="kolam" aria-hidden="true"></div></div>
+
+  <section class="wrap">
+    <h2>What we serve</h2>
+    <div class="grid gap-5 md:grid-cols-3 mt-4">
+      {cards.map((c) => (
+        <article class="card">
+          <Photo name={c.photo} alt={c.alt} label={c.label} />
+          <h3>{c.title}</h3>
+          <p>{c.text}</p>
+          {pathLive(c.path) && <p class="mt-2"><a href={c.path}>See the menu</a></p>}
+        </article>
+      ))}
+    </div>
+    <p class="mt-4"><a href="/menu/">View the full menu</a></p>
+  </section>
+
+  <section class="wrap">
+    <h2>What to expect at Brihadhee</h2>
+    <ul class="prose-b">
+      {facts.signature.map((s) => <li>{s}</li>)}
+    </ul>
+  </section>
+
+  <section class="wrap">
+    <h2>Find us in Anna Nagar</h2>
+    <p>{facts.name} is at {facts.doorNumber}, {facts.streetAddress}, {facts.locality}, {facts.city} {facts.postalCode}. Nearby landmarks include {facts.landmarks.slice(0, 3).join(', ')}.</p>
+    <p class="mt-2"><a href="/location/anna-nagar/">Address, map and directions</a></p>
+  </section>
+
+  {faqs.length > 0 && (
+    <section class="wrap">
+      <h2>Quick answers</h2>
+      <FAQ faqs={faqs} />
+      <p class="mt-3"><a href="/faq/">More questions</a></p>
+    </section>
+  )}
+
+  <section class="wrap mt-10">
+    <div class="card" style="background:var(--color-sand)">
+      <h2 style="margin-top:0">Visit, order or book</h2>
+      <div class="flex flex-wrap gap-3 mt-3">
+        <a class="btn btn-primary" href="/order/">Order</a>
+        <a class="btn btn-accent" href="/book-a-table/">Book a table</a>
+        {tel && <a class="btn" href={tel}>Call</a>}
+        <a class="btn" href={directionsUrl()} target="_blank" rel="noopener">Directions</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const el = document.querySelector<HTMLElement>('[data-today]');
+  const raw = document.getElementById('hours-data')?.textContent;
+  if (el && raw) {
+    type Rule = { days: string[]; opens: string; closes: string };
+    const rules: Rule[] = JSON.parse(raw);
+    const day = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kolkata' }).format(new Date());
+    const fmt = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+      return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+    };
+    const r = rules.find((x) => x.days.includes(day));
+    if (r) {
+      el.textContent = `Today (${day}): ${fmt(r.opens)} to ${fmt(r.closes)}`;
+      el.hidden = false;
+    }
+  }
+</script>

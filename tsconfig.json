@@ -1,8 +1,5 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "compilerOptions": {
-    "erasableSyntaxOnly": true
-  },
-  "include": ["src/**/*.ts", "config/**/*.ts"],
-  "exclude": ["dist", "node_modules"]
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist", "dist-draft", "dist-fixture", "node_modules"]
 }

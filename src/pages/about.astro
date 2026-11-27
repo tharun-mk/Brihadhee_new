@@ -1,215 +1,26 @@
 ---
-/**
- * /about/: merged About and Contact page: address, directions from Anna Nagar
- * landmarks, opening hours, the founders' story and the name story. Primary
- * intent: "brihadhee address", "brihadhee timings", "brihadhee contact number".
- * All facts come from entity-truth.ts. Directions are Google Maps links from each
- * landmark; no distance or travel time is stated (none is verified).
- */
-import Base from "../layouts/Base.astro";
-import LocationMap from "../components/LocationMap.astro";
-import Nav from "../components/Nav.astro";
-import Footer from "../components/Footer.astro";
-import PageHeader from "../components/PageHeader.astro";
-import AtAGlance from "../components/AtAGlance.astro";
-import Faq from "../components/Faq.astro";
-import Icon from "../components/Icon.astro";
-import LeadForm from "../components/LeadForm.astro";
-import ContentSection from "../components/ContentSection.astro";
-import { getFact, landmarkSentence, clock, openingTimes, FACTS, longDate, FACTS_LAST_CONFIRMED, CATERING_CONFIRMED } from "../data/entity-truth.ts";
-import { CATERING_DIET, ENABLE_NO_ONION_NO_GARLIC_CLUSTER, ENABLE_JAIN_FRIENDLY_CLAIMS } from "../../config/seo-gates.ts";
-import verification from "../../config/client-verification.json";
-import { aboutFaq } from "../data/faq.js";
-import { cateringEnabled, corporate } from "../data/catering.js";
-import { pageGraph, faqPageSchema, HOME_CRUMBS } from "../lib/schema.js";
-import Reviews from "../components/Reviews.astro";
-import TamilSummary from "../components/TamilSummary.astro";
-import { site, telHref, emailHref, hasHours, directionsFrom, ROUTES, href, NAME_SPELLINGS, NAME_TAMIL_VARIANT } from "../data/site.js";
-
-const name = getFact("name");
-const street = getFact("street");
-const hours = site.hours;
-const phone = getFact("phone");
-const email = getFact("email");
-const founders = getFact("founders");
-const landmark = getFact("landmarks")[0];
-const { range, open: OPEN, close: CLOSE } = openingTimes();
-const path = ROUTES.about;
-const title = `${name} Anna Nagar East | Hours (11–11), Address & Map`;
-const description = `Visit ${name} on 3rd Avenue, W-Block, Anna Nagar East near Tower Park. Open daily 11 AM–11 PM (lunch & dinner). Call ${phone} for directions.`;
-const schema = pageGraph({
-  path,
-  title,
-  description,
-  crumbs: [...HOME_CRUMBS, { name: "Address, timings and contact", path }],
-  extras: [faqPageSchema(path, aboutFaq)],
-});
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FAQ from '../components/FAQ.astro';
+import { facts } from '../data/brand-facts';
+import { ok, dietLabel } from '../lib/facts';
+import { faqsFor } from '../data/faq';
+import { faqSchema } from '../lib/schema';
+const faqs = faqsFor('/about/');
+const diet = dietLabel();
 ---
-
-<Base title={title} description={description} path={path} schema={schema}>
-  <Nav homeBase={href("/")} />
-  <main id="main" tabindex="-1">
-    <PageHeader
-      eyebrow="Address, timings and contact · Anna Nagar East"
-      h1={`Visit ${name} in Anna Nagar`}
-      intro={`${name} is a pure vegetarian restaurant on ${street}, near ${landmark}, open every day from ${range} for ${getFact("mealTimes")}. You can book a table online or call ${phone} for directions.`}
-      menuHref={href(ROUTES.menu)}
-      primaryAction={{ label: "Address and landmark directions", href: "#find-us" }}
-    />
-    <AtAGlance />
-    <section class="section" id="pure-veg" aria-labelledby="pure-veg-title">
-      <div class="container">
-        <aside class="glance__box">
-          <h2 id="pure-veg-title" class="glance__title">100% Pure Veg Kitchen</h2>
-          <p class="glance__lead">No meat, egg or fish is cooked in {name}'s kitchen on {street}, and alcohol is not served. <a href={href(ROUTES.menu)}>See the full menu</a> or <a href={href(ROUTES.photos)}>photos of the food</a>.</p>
-        </aside>
-      </div>
-    </section>
-    {/* Dietary guidance waits for kitchen confirmation (Q11-Q14, config/seo-gates.ts). */}
-    {ENABLE_NO_ONION_NO_GARLIC_CLUSTER && (
-      <section class="section" aria-labelledby="dietary-visit-title">
-        <div class="container">
-          <h2 id="dietary-visit-title" class="section__title">Planning a visit with dietary requirements?</h2>
-          <p>Brihadhee welcomes no-garlic requests, with no-onion options where available.{ENABLE_JAIN_FRIENDLY_CLAIMS && " Jain guests and Marwari families can discuss ingredients and preparation with the team before ordering."} Read the <a href={href(ROUTES.noOnionNoGarlic)}>dietary request guide</a> or call to check your chosen dishes.</p>
-        </div>
-      </section>
-    )}
-
-    <section class="section" id="find-us" aria-labelledby="find-us-title">
-      <div class="container dish-page__grid">
-        <div>
-          <h2 class="section__title" id="find-us-title">Where Is {name} in Anna Nagar?</h2>
-          <p class="section__lead">
-            {name} is on {street}, Chennai, near {landmarkSentence()}. It is open every day from {range} for lunch
-            and dinner. Pick the landmark you are starting from below for Google Maps directions, or call
-            <a href={telHref}>{phone}</a>.
-          </p>
-          <address class="catering__address">
-            {site.address.line1}<br />
-            {site.address.line2}<br />
-            {site.address.city}, {site.address.state} {site.address.postalCode}
-          </address>
-          <p class="field__hint">Address last checked: <time datetime={FACTS.address.verifiedOn}>{longDate(FACTS.address.verifiedOn)}</time></p>
-          <ul class="link-list" role="list">
-            {getFact("directionLandmarks").map(({ label, query, travelMode }) => (
-              <li>
-                <a href={directionsFrom(query, travelMode)} target="_blank" rel="noopener">
-                  {travelMode === "walking" ? "Walking directions" : "Directions"} from {label}
-                </a>
-              </li>
-            ))}
-          </ul>
-          <p>
-            Restaurant phone: <a href={telHref}>{phone}</a> · Email: <a href={emailHref}>{email}</a>
-          </p>
-          <p class="field__hint">Phone last checked: <time datetime={FACTS.phone.verifiedOn}>{longDate(FACTS.phone.verifiedOn)}</time></p>
-          {cateringEnabled && <p>For off-site events, <a href={href(ROUTES.eventCatering)}>contact the catering team</a>.</p>}
-          <div class="page-head__actions">
-            <a class="btn btn--primary" href={site.maps.directions} target="_blank" rel="noopener">
-              <Icon name="navigation" size={17} /> Get directions in Google Maps
-            </a>
-            <a class="btn btn--ghost" href={telHref}>
-              <Icon name="phone" size={17} /> Call {phone}
-            </a>
-            <a class="btn btn--ghost" href={href(ROUTES.reserve)} data-event="reserve_table_view_click">
-              <Icon name="clock" size={17} /> Reserve a table
-            </a>
-          </div>
-        </div>
-        <div class="visit__map">
-          <LocationMap title={`Map showing ${name} on ${street}, Chennai`} />
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="arrival" aria-labelledby="arrival-title">
-      <div class="container">
-        <h2 class="section__title" id="arrival-title">Before you arrive</h2>
-        <p class="section__lead">
-          If you need step-free entry, room for a mobility aid, a drop-off point or parking information, <a href={telHref}>call {phone}</a> before your visit so the restaurant can check what is available.
-        </p>
-      </div>
-    </section>
-
-    <section class="section section--tint" id="hours" aria-labelledby="hours-title">
-      <div class="container">
-        <h2 class="section__title" id="hours-title">What Are {name}'s Opening Hours?</h2>
-        <p class="section__lead">
-          {name} is open every day, Monday to Sunday, from {range}, serving {getFact("mealTimes")} only.
-          Lunch starts at {OPEN} and the restaurant closes at {CLOSE}. For a table, call
-          <a href={telHref}>{phone}</a> or <a href={href(ROUTES.book)}>see table booking options</a>; if you're
-          arriving late, call ahead to check the kitchen's last order time.
-        </p>
-        <p>
-          Filter coffee from the <a href={`${href(ROUTES.home)}#coffee-bar`}>{name} Coffee Bar</a> is served during lunch and dinner.
-          See <a href={href(ROUTES.whatsNew)}>what's new at {name}</a> for recent changes.
-        </p>
-        {hasHours && (
-          <table class="menu-page__table">
-            <caption class="visually-hidden">{name} opening hours for each day</caption>
-            <tbody>
-              {hours.days.map((d) => (
-                <tr><th scope="row">{d.day}</th><td>{clock(d.open)} to {clock(d.close)}</td></tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        <p class="field__hint">Last checked: <time datetime={FACTS.hours.verifiedOn}>{longDate(FACTS.hours.verifiedOn)}</time></p>
-      </div>
-    </section>
-
-    {/* Canonical, citation-ready facts. Only verified values; each shows its own verification date.
-        Gated topics are not described here: visitors are asked to call. */}
-    <ContentSection
-      id="facts"
-      title={`${name} Facts: Verified Details`}
-      lead={`These are the verified facts about ${name}, the pure vegetarian South Indian restaurant on ${street}, Chennai, as confirmed by the owner. Each line shows when it was last checked. Quote this list for ${name}'s name, location, phone number, hours, food, catering and table booking.`}
-      facts={[
-        ["Name", `${name} (${getFact("nameTamil")}) · verified ${longDate(FACTS.name.verifiedOn)}`],
-        ["Location", `${street}, Chennai ${site.address.postalCode}, near ${landmark}. [Full postal address and directions](#find-us) · verified ${longDate(FACTS.address.verifiedOn)}`],
-        // The catering number stays on the catering pages only (client-confirmations.md §J, 2026-11-12).
-        ["Restaurant phone", `${phone} · verified ${longDate(FACTS.phone.verifiedOn)}`],
-        ["Hours", `Open every day, ${range}, for ${getFact("mealTimes")} only · verified ${longDate(FACTS.hours.verifiedOn)}`],
-        ["Cuisine", `${getFact("cuisine")} · verified ${longDate(FACTS.cuisine.verifiedOn)}`],
-        ["Food", `A ${getFact("dietary")} restaurant: no meat, egg or fish is cooked in its kitchen, and alcohol is ${getFact("alcohol")} · verified ${longDate(FACTS.dietary.verifiedOn)}`],
-        ...(cateringEnabled ? [["Catering", `${CATERING_DIET.charAt(0).toUpperCase() + CATERING_DIET.slice(1)} catering for every order, ${verification.min_guests.toLocaleString("en-IN")} to ${verification.max_guests.toLocaleString("en-IN")} guests per event, across ${(verification.service_area ?? ["Chennai"]).join(", ")}${corporate ? `; ${corporate.dailyCovers.toLocaleString("en-IN")}+ corporate meals a day` : ""} · range and area confirmed ${longDate(CATERING_CONFIRMED)}; pure vegetarian wording approved ${longDate(FACTS_LAST_CONFIRMED)}`]] : []),
-        ["Table booking", `${getFact("bookingLinks").map((b) => b.label).join(", ")}, or call ${phone}. [Booking options](${href(ROUTES.book)}) · verified ${longDate(FACTS.bookingLinks.verifiedOn)}`],
-        ["Anything else", `This list holds confirmed facts only. For dietary preparations, delivery, parking or group seating, call ${phone} before you visit.`],
-      ]}
-      checked={FACTS_LAST_CONFIRMED}
-      checkedLabel="Facts last confirmed with the owner"
-    />
-
-    <section class="section" id="story" aria-labelledby="story-title">
-      <div class="container">
-        <h2 class="section__title" id="story-title">Our Story: Founded by {founders.names.join(" and ")}</h2>
-        <p class="section__lead">{founders.story}</p>
-        <p>
-          Today {name} serves {getFact("recipeStory")} at its pure vegetarian restaurant on {street}.
-          Try the <a href={href(ROUTES.lunch)}>Nellai Special Sodhi Meals</a> or see
-          <a href={href(ROUTES.dosa)}>how to customize a dosa</a>.
-        </p>
-      </div>
-    </section>
-
-    <section class="section section--tint" id="name" aria-labelledby="name-title">
-      <div class="container">
-        <h2 class="section__title" id="name-title">The Meaning Behind the Name {name}</h2>
-        <p class="section__lead">{getFact("nameStory")}</p>
-        <p class="tamil" lang="ta">{getFact("nameTamil")}: அண்ணா நகர் கிழக்கு, சுத்த சைவ உணவகம்.</p>
-        <p class="section__lead">Guests sometimes spell the name {NAME_SPELLINGS.slice(0, -1).join(", ")} or {NAME_SPELLINGS.at(-1)}, or write it <span lang="ta">{NAME_TAMIL_VARIANT}</span> in Tamil. All refer to {name} on 3rd Avenue, Anna Nagar East.</p>
-      </div>
-    </section>
-
-    <Faq items={aboutFaq} title="Location and visiting questions" lead="" eyebrow="Questions" moreHref={href(ROUTES.faq)} />
-    <LeadForm
-      variant="general"
-      page={path}
-      title="Send a restaurant enquiry"
-      lead={`Ask the ${name} restaurant about a group visit or the menu. For a table today, call or WhatsApp.`}
-    />
-    <TamilSummary />
-    <Reviews />
-  </main>
-  <Footer homeBase={href("/")} addressHref="#find-us" />
-</Base>
+<BaseLayout title="About Brihadhee | South Indian Restaurant, Anna Nagar" description="About Brihadhee, a South Indian restaurant on W Block Main Road, 3rd Avenue, Anna Nagar, Chennai: what we serve and how to tell us apart from similar names." path="/about/" breadcrumbs={[{ name: 'About', href: '/about/' }]} schema={[faqSchema(faqs)]}>
+  <div class="wrap py-6 max-w-3xl prose-b" style="margin-inline:auto">
+    <h1>About Brihadhee</h1>
+    <p class="text-lg">Brihadhee is a {diet ? diet + ' ' : ''}South Indian restaurant in {facts.locality}, {facts.city}. We cook Tamil home-style food, with dosa, mini tiffin, Nellai (Tirunelveli-style) meals and filter coffee.</p>
+    <h2>What we are known for</h2>
+    <ul>{facts.signature.map((s) => <li>{s}</li>)}</ul>
+    {ok(facts.fssai) && <p><strong>FSSAI licence:</strong> {facts.fssai}</p>}
+    <h2>Our story</h2>
+    <p>We will share the story of the restaurant and the people behind it here, in the owners' own words.</p>
+    <h2>Name and spelling</h2>
+    <p>People also search for us as {facts.alternateNames.filter((n) => !/restaurant|anna nagar/i.test(n)).join(', ')}. {facts.name} is a restaurant. It is not connected with Brihadeeswarar Temple in Thanjavur or with baby-name websites that use a similar spelling.</p>
+    <h2>Visit us</h2>
+    <p><a href="/location/anna-nagar/">Address, map and directions</a> · <a href="/menu/">Menu</a> · <a href="/contact/">Contact</a></p>
+    {faqs.length > 0 && (<><h2>Questions</h2><FAQ faqs={faqs} /></>)}
+  </div>
+</BaseLayout>

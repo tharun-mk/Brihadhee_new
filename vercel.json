@@ -1,41 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "astro",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "trailingSlash": true,
-  "redirects": [
-    {
-      "source": "/:path(.*)",
-      "has": [{ "type": "header", "key": "host", "value": "^brihadhee\\.vercel\\.app$" }],
-      "destination": "https://www.brihadhee.com/:path*",
-      "statusCode": 301
-    },
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "brihadhee.com" }],
-      "destination": "https://www.brihadhee.com/:path*",
-      "statusCode": 301
-    },
-    { "source": "/best-dosa-parotta-anna-nagar/", "destination": "/menu/dosa/", "statusCode": 301 },
-    { "source": "/nellai-meals-south-indian-veg-anna-nagar/", "destination": "/menu/nellai-meals/", "statusCode": 301 }
-  ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" },
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com https://www.facebook.com; font-src 'self'; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://connect.facebook.net https://www.facebook.com; frame-src https://www.google.com https://maps.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
-        }
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.google-analytics.com https://*.googletagmanager.com; font-src 'self'; connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://api.web3forms.com; frame-src https://www.google.com https://maps.google.com; form-action 'self' https://api.web3forms.com; base-uri 'self'; frame-ancestors 'self'" }
       ]
     },
     {
-      "source": "/(.*)",
-      "has": [{ "type": "header", "key": "host", "value": "^.+\\.vercel\\.app$" }],
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
+      "source": "/_astro/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     }
   ]
 }

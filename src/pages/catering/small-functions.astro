@@ -1,0 +1,52 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { facts } from '../../data/brand-facts';
+import { ok } from '../../lib/facts';
+import { cateringReady, cateringServiceSchema, fromMin, listText, CATERING_CRUMB } from '../../lib/catering';
+
+const c = facts.catering;
+const path = '/catering/small-functions/';
+const title = 'Small Function Catering in Chennai, 50+ Guests | Brihadhee';
+const description = 'Vegetarian catering for small functions in Chennai, from 50 guests: birthdays at home, get-togethers and family events. Get a quote from Brihadhee.';
+const schema = [cateringServiceSchema(path, 'Small function catering in Chennai', `Vegetarian catering for small functions of about 50 to 150 guests in ${facts.city}, ${fromMin()}. Cooked in ${facts.name}'s ${facts.locality} restaurant kitchen.`)];
+const nellai = c.dishes.find((d) => /nellai/i.test(d));
+---
+<BaseLayout title={title} description={description} path={path} noindex={!cateringReady.smallFunctions()} breadcrumbs={[CATERING_CRUMB, { name: 'Small functions', href: path }]} schema={schema}>
+  <div class="wrap py-6 max-w-3xl prose-b" style="margin-inline:auto">
+    <h1>Small function catering in Chennai{c.minimumGuests && <>, from {c.minimumGuests} guests</>}</h1>
+    <p class="text-lg">{facts.name} caters small vegetarian functions in {facts.city}{c.minimumGuests && <>, from {c.minimumGuests} guests</>}. A birthday at home, a get-together in your apartment clubhouse or a family event of 50 to 150 people gets the same kitchen and the same care as a large order. Send your date and headcount and we will quote on WhatsApp.</p>
+
+    <h2>What counts as a small function?</h2>
+    <p>For us, a small function is any event of about 50 to 150 guests. Typical examples are a birthday at home, a family get-together, or a celebration in a community hall or clubhouse. For bigger numbers, see <a href="/catering/events/">event catering</a> or <a href="/catering/weddings/">wedding catering</a>.</p>
+
+    {c.minimumGuests && (
+      <>
+        <h2>Is {c.minimumGuests} guests the minimum?</h2>
+        <p>Yes. Our catering starts at {c.minimumGuests} guests. For a smaller group, come to the restaurant; see <a href="/events/group-dining/">group dining</a> in {facts.locality}.</p>
+      </>
+    )}
+
+    <h2>Why choose a restaurant kitchen for a small function?</h2>
+    <p>Many caterers are set up for large weddings. A restaurant kitchen cooks fresh, every day, in the quantities a smaller event needs. You get the dishes our restaurant guests already come back for{nellai && <>, such as {nellai}</>}, without paying for a scale you do not need.</p>
+    {c.liveDosaCounter === true && <p>Want something your guests will talk about? Add a live <a href="/menu/dosa/">build-your-own dosa</a> counter.</p>}
+
+    {c.serviceStaffOptional && (
+      <>
+        <h2>Do we need service staff for 50 guests?</h2>
+        <p>That is your choice. Tick "service needed" on the quote form and we include staff in the quote. Otherwise we deliver the food ready to serve.</p>
+      </>
+    )}
+
+    <h2>Where can you serve?</h2>
+    <p>At your home, an apartment clubhouse, a community hall or another venue.{c.areasServed.length > 0 && <> We cater in {listText(c.areasServed)}.</>}</p>
+
+    <h2>What does it cost?</h2>
+    <p>The quote depends on the headcount, the menu, lunch or dinner, and whether you want service staff. We do not publish a per-plate price; send your details and we reply with one.</p>
+
+    <h2>How early should we book?</h2>
+    <p>{ok(c.leadTimeSentence) && <>{c.leadTimeSentence} </>}Weekends near festivals fill first, so book as soon as your date is fixed.</p>
+
+    <p>See all <a href="/catering/">{facts.name} catering</a>.</p>
+    <p><a class="btn btn-primary" href="/catering/quote/" data-event="catering_quote_click" data-label="small-functions">Get a catering quote</a></p>
+  </div>
+</BaseLayout>

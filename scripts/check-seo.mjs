@@ -1,169 +1,119 @@
-#!/usr/bin/env node
-/**
- * check:seo (page-level rules). Run after astro build; validate-schema.js and
- * aeo-lint.mjs cover JSON-LD, FAQ text, NAP and answer format.
- *
- *   node scripts/check-seo.mjs [distDir]      (default: dist)
- *
- * Errors (exit 1):
- *  - missing or duplicate <title> / meta description
- *  - missing <html lang>, not exactly one <h1>
- *  - missing canonical, or canonical not on the production origin
- *  - an indexable page missing from the sitemap, or a noindex page in it
- *  - a sitemap URL with no built page
- *  - orphan page: in the sitemap but linked from no other page
- *  - robots.txt without a Sitemap line, or pointing to a missing file
- *  - hreflang alternates that are not reciprocal
- *  - title longer than 60 characters or meta description longer than 155
- *    (on-page blueprint, 2026-11-11)
- * Warnings on indexable pages: title shorter than 50 characters, missing
- * brand suffix, or description shorter than 140 characters.
- */
-import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, resolve, relative } from "node:path";
-import { pathToFileURL } from "node:url";
+// SEO gate: titles/descriptions, one H1, canonicals, JSON-LD validity and fact-matching, orphans, internal-link rules,
+// hreflang reciprocity, sitemap hygiene.
+import fs from 'node:fs';
+import path from 'node:path';
+import { args, htmlFiles, loadPage, readReport, fail } from './_lib.mjs';
 
-const ROOT = resolve(import.meta.dirname, "..");
-const dist = resolve(process.argv[2] ?? join(ROOT, "dist"));
-// GitHub Pages (base "/brihadhee") was turned off on 2026-11-11; every build uses the root.
-const BASE = "";
-const { SITE_ORIGIN, getFact } = await import(pathToFileURL(join(ROOT, "src", "data", "entity-truth.ts")).href);
-const brandSuffix = ` | ${getFact("name")}`;
-const SKIP = new Set(["404.html"]); // not indexable by design
-
-const errors = [];
-const warnings = [];
-const decode = (s) =>
-  s.replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">");
-const len = (s) => [...s].length;
-
-function walk(dir, out = []) {
-  for (const name of readdirSync(dir)) {
-    const p = join(dir, name);
-    if (statSync(p).isDirectory()) walk(p, out);
-    else if (name.endsWith(".html")) out.push(p);
-  }
-  return out;
-}
-/** dist file -> site path ("/menu/"). */
-function pathOf(file) {
-  const rel = relative(dist, file).replaceAll("\\", "/");
-  if (rel === "index.html") return "/";
-  return rel.endsWith("/index.html") ? `/${rel.slice(0, -"index.html".length)}` : `/${rel}`;
-}
-/** href (absolute, root-relative or with base) -> site path without base, hash or query; null if external. */
-function sitePath(href, fromPath) {
-  if (/^(mailto:|tel:|javascript:|data:|#)/i.test(href)) return null;
-  let url;
-  try {
-    url = new URL(href, `${SITE_ORIGIN}${BASE}${fromPath}`);
-  } catch {
-    return null;
-  }
-  if (url.origin !== SITE_ORIGIN) return null;
-  let p = url.pathname;
-  if (BASE && p.startsWith(BASE)) p = p.slice(BASE.length) || "/";
-  return p;
-}
-
-const pages = walk(dist)
-  .filter((f) => !SKIP.has(relative(dist, f).replaceAll("\\", "/")))
-  .map((file) => {
-    const html = readFileSync(file, "utf8");
-    const path = pathOf(file);
-    const title = decode(html.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim() ?? "");
-    const desc = decode(html.match(/<meta name="description" content="([^"]*)"/)?.[1]?.trim() ?? "");
-    const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1] ?? "";
-    const robots = html.match(/<meta name="robots" content="([^"]*)"/)?.[1] ?? "";
-    const lang = html.match(/<html[^>]*\blang="([^"]+)"/)?.[1] ?? "";
-    const h1 = (html.match(/<h1[\s>]/g) ?? []).length;
-    const links = [...html.matchAll(/<a\b[^>]*\bhref="([^"]+)"/g)].map((m) => sitePath(decode(m[1]), path)).filter(Boolean);
-    const hreflang = [...html.matchAll(/<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"/g)].map((m) => ({
-      lang: m[1],
-      href: m[2],
-    }));
-    const keywordsTag = /<meta name="keywords"/i.test(html);
-    const ogUrl = html.match(/<meta property="og:url" content="([^"]+)"/)?.[1] ?? "";
-    return { file, path, title, desc, canonical, noindex: /noindex/i.test(robots), lang, h1, links, hreflang, keywordsTag, ogUrl };
-  });
-
-/* ---- Per page --------------------------------------------------------- */
-for (const p of pages) {
-  const at = p.path;
-  if (!p.title) errors.push(`${at}: missing <title>`);
-  else if (len(p.title) > 60) errors.push(`${at}: title is ${len(p.title)} chars (max 60): "${p.title}"`);
-  else if (!p.noindex && len(p.title) < 50) warnings.push(`${at}: title is ${len(p.title)} chars (aim 50–60)`);
-  if (!p.desc) errors.push(`${at}: missing meta description`);
-  else if (len(p.desc) > 155) errors.push(`${at}: description is ${len(p.desc)} chars (max 155): "${p.desc}"`);
-  else if (!p.noindex && len(p.desc) < 140) warnings.push(`${at}: description is ${len(p.desc)} chars (aim 140–155)`);
-  if (!p.lang) errors.push(`${at}: <html> has no lang attribute`);
-  if (p.h1 !== 1) errors.push(`${at}: ${p.h1} <h1> elements (need exactly 1)`);
-  if (p.keywordsTag) errors.push(`${at}: has a <meta name="keywords"> tag (ignored by Google, reads as stuffing)`);
-  if (p.ogUrl && p.canonical && p.ogUrl !== p.canonical) errors.push(`${at}: og:url ${p.ogUrl} does not match canonical ${p.canonical}`);
-  if (!p.noindex) {
-    if (!p.title.endsWith(brandSuffix)) warnings.push(`${at}: title does not end with "${brandSuffix}"`);
-    if (!p.canonical) errors.push(`${at}: missing canonical`);
-    else if (p.canonical !== `${SITE_ORIGIN}${p.path}`)
-      errors.push(`${at}: canonical is ${p.canonical}, expected ${SITE_ORIGIN}${p.path}`);
-  }
-}
-for (const field of ["title", "desc"]) {
-  const seen = new Map();
-  for (const p of pages.filter((x) => !x.noindex && x[field])) {
-    if (seen.has(p[field])) errors.push(`${p.path}: duplicate ${field === "desc" ? "description" : "title"} (also on ${seen.get(p[field])})`);
-    else seen.set(p[field], p.path);
-  }
-}
-
-/* ---- Sitemap ---------------------------------------------------------- */
-const sitemapFile = join(dist, "sitemap.xml");
-const sitemap = existsSync(sitemapFile)
-  ? [...readFileSync(sitemapFile, "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
-  : (errors.push("sitemap.xml missing"), []);
-const inSitemap = new Set(sitemap.map((u) => (u.startsWith(SITE_ORIGIN) ? u.slice(SITE_ORIGIN.length) : u)));
+const { dist } = args();
+const report = readReport(dist);
+const pages = htmlFiles(dist).map((f) => loadPage(dist, f));
 const byPath = new Map(pages.map((p) => [p.path, p]));
-if (inSitemap.size !== sitemap.length) errors.push("sitemap.xml contains duplicate URLs");
-for (const path of inSitemap) {
-  const page = byPath.get(path);
-  if (!page) errors.push(`sitemap lists ${path} but no page was built`);
-  else if (page.noindex) errors.push(`sitemap lists noindex page ${path}`);
-}
-for (const p of pages) if (!p.noindex && !inSitemap.has(p.path)) errors.push(`${p.path}: indexable page missing from sitemap`);
+const errors = [];
+const warn = [];
+const E = (p, m) => errors.push(`${p}: ${m}`);
 
-const index = join(dist, "sitemap-index.xml");
-if (!existsSync(index)) errors.push("sitemap-index.xml missing");
-else if (!readFileSync(index, "utf8").includes(`${SITE_ORIGIN}/sitemap.xml`)) errors.push("sitemap-index.xml does not list sitemap.xml");
-
-/* ---- robots.txt ------------------------------------------------------- */
-const robotsFile = join(dist, "robots.txt");
-if (!existsSync(robotsFile)) errors.push("robots.txt missing");
-else {
-  const robots = readFileSync(robotsFile, "utf8");
-  const sm = robots.match(/^Sitemap:\s*(\S+)/m)?.[1];
-  if (!sm) errors.push("robots.txt has no Sitemap line");
-  else if (!existsSync(join(dist, new URL(sm).pathname.slice(1)))) errors.push(`robots.txt Sitemap ${sm} not built`);
-  if (/^Disallow:\s*\/\s*$/m.test(robots)) errors.push("robots.txt disallows the whole site");
-}
-
-/* ---- Orphans ---------------------------------------------------------- */
-const linkedFrom = new Map();
-for (const p of pages) for (const l of p.links) if (l !== p.path) linkedFrom.set(l, (linkedFrom.get(l) ?? 0) + 1);
-for (const path of inSitemap) if (path !== "/" && !linkedFrom.get(path)) errors.push(`${path}: orphan (no internal link from another page)`);
-
-/* ---- hreflang reciprocity -------------------------------------------- */
+// titles unique
+const titles = new Map();
 for (const p of pages) {
-  for (const alt of p.hreflang) {
-    const target = byPath.get(sitePath(alt.href, p.path) ?? "");
-    if (!target) errors.push(`${p.path}: hreflang ${alt.lang} points to missing page ${alt.href}`);
-    else if (!target.hreflang.some((a) => sitePath(a.href, target.path) === p.path))
-      errors.push(`${p.path}: hreflang ${alt.lang} -> ${target.path} is not reciprocal`);
+  if (p.path === '/404/') continue;
+  if (titles.has(p.title)) E(p.path, `duplicate title with ${titles.get(p.title)}: "${p.title}"`);
+  titles.set(p.title, p.path);
+}
+
+const site = report.siteUrl.replace(/\/$/, '');
+const inbound = new Map();
+for (const p of pages) {
+  for (const h of p.links) {
+    if (!h || !h.startsWith('/') || h.startsWith('//')) continue;
+    const t = h.split('#')[0].split('?')[0];
+    if (t === p.path) continue;
+    inbound.set(t, (inbound.get(t) ?? 0) + 1);
   }
 }
 
-for (const w of warnings) console.warn(`  ⚠ ${w}`);
-if (errors.length) {
-  console.error(`✖ check:seo failed (${errors.length} problem(s)):`);
-  for (const e of errors) console.error(`  - ${e}`);
-  process.exit(1);
+for (const p of pages) {
+  if (p.path === '/404/') continue;
+  if (!p.title || p.title.length > 60) E(p.path, `title missing or > 60 chars (${p.title.length})`);
+  if (!p.description || p.description.length > 160) E(p.path, `description missing or > 160 chars (${p.description.length})`);
+  if (p.h1s.length !== 1) E(p.path, `expected exactly 1 <h1>, found ${p.h1s.length}`);
+  if (!p.lang) E(p.path, 'missing <html lang>');
+  if (!p.canonical) E(p.path, 'missing canonical');
+  else if (p.canonical !== `${site}${p.path}`) E(p.path, `canonical mismatch: ${p.canonical}`);
+  if (!p.root.querySelector('meta[property="og:title"]')) E(p.path, 'missing Open Graph tags');
+
+  // JSON-LD
+  let hasBreadcrumb = false;
+  for (const raw of p.jsonld) {
+    let j;
+    try { j = JSON.parse(raw); } catch { E(p.path, 'invalid JSON-LD'); continue; }
+    const t = j['@type'];
+    if (t === 'BreadcrumbList') hasBreadcrumb = true;
+    if (/TODO|undefined/.test(raw)) E(p.path, 'JSON-LD contains TODO/undefined');
+    if (t === 'Restaurant') {
+      for (const k of ['name', 'address']) if (!j[k]) E(p.path, `Restaurant schema missing ${k}`);
+      if (j.name !== 'Brihadhee') E(p.path, 'Restaurant name does not match facts');
+      if (j.address && !String(j.address.streetAddress).includes(report.expected.street)) E(p.path, 'Restaurant street does not match facts');
+      if (j.address && j.address.postalCode !== report.expected.postalCode) E(p.path, 'Restaurant postal code does not match facts');
+      if (report.expected.phone && j.telephone && j.telephone !== report.expected.phone) E(p.path, 'Restaurant phone does not match facts');
+      if (j.suitableForDiet && report.claims.dietClaim !== 'pure-veg') E(p.path, 'suitableForDiet set without confirmed pure-veg');
+      if (!j.image) warn.push(`${p.path}: Restaurant schema has no image (add a real storefront photo)`);
+    }
+    if (t === 'FAQPage') {
+      const bodyText = p.root.text;
+      for (const q of j.mainEntity ?? []) if (!bodyText.includes(q.name)) E(p.path, `FAQPage question not visible on page: ${q.name}`);
+    }
+    if (t === 'Menu') for (const s of j.hasMenuSection ?? []) for (const m of s.hasMenuItem ?? []) if (m.offers && !(Number(m.offers.price) > 0)) E(p.path, 'MenuItem with invalid price');
+    if (t === 'Article' && !j.author?.name) E(p.path, 'Article without named author');
+    if (j.aggregateRating || j.review) E(p.path, 'Review/AggregateRating markup is not allowed (own-site reviews do not qualify)');
+  }
+  if (p.path !== '/' && !p.path.startsWith('/thank-you') && !hasBreadcrumb) E(p.path, 'missing BreadcrumbList');
+
+  // indexable pages
+  if (!p.noindex) {
+    if (p.path !== '/' && !inbound.get(p.path)) E(p.path, 'orphan page: no internal links point to it');
+    if (p.path.startsWith('/guides/') && p.path !== '/guides/') {
+      const menuLinks = new Set(p.links.filter((h) => h && h.startsWith('/menu/')));
+      if (menuLinks.size < 2) E(p.path, 'guide must link to at least 2 menu pages');
+      if (!p.links.includes('/location/anna-nagar/')) E(p.path, 'guide must link to /location/anna-nagar/');
+    }
+    if (p.path.startsWith('/menu/') && p.path !== '/menu/') {
+      if (!p.links.some((h) => h === '/order/' || h === '/book-a-table/')) E(p.path, 'menu page must link to /order/ or /book-a-table/');
+      const guideFor = { '/menu/dosa/': 'types-of-dosa', '/menu/mini-tiffin/': 'what-is-mini-tiffin', '/menu/nellai-meals/': 'nellai-meals-explained', '/menu/parotta-kothu/': 'paanai-parotta' }[p.path];
+      const g = guideFor && byPath.get(`/guides/${guideFor}/`);
+      if (g && !g.noindex && !p.links.includes(`/guides/${guideFor}/`)) E(p.path, `menu page must link to its guide /guides/${guideFor}/`);
+    }
+  }
+
+  // hreflang reciprocity
+  for (const a of p.alternates) {
+    if (a.hreflang === 'x-default') continue;
+    const target = byPath.get(new URL(a.href).pathname);
+    if (!target) { E(p.path, `hreflang target missing: ${a.href}`); continue; }
+    if (!target.alternates.some((b) => new URL(b.href).pathname === p.path)) E(p.path, `hreflang not reciprocal with ${target.path}`);
+  }
 }
-console.log(`✔ check:seo passed (${pages.length} page(s), ${inSitemap.size} in sitemap, ${warnings.length} warning(s))`);
+
+// sitemap hygiene (child sitemaps listed in sitemap-index.xml)
+for (const f of fs.readdirSync(dist).filter((n) => /^sitemap-.*\.xml$/.test(n) && n !== 'sitemap-index.xml')) {
+  const sm = fs.readFileSync(path.join(dist, f), 'utf8');
+  for (const loc of sm.match(/<loc>(.*?)<\/loc>/g) ?? []) {
+    const u = new URL(loc.replace(/<\/?loc>/g, '')).pathname;
+    const pg = byPath.get(u);
+    if (!pg) E('sitemap', `${f} lists a URL with no built page: ${u}`);
+    else if (pg.noindex) E('sitemap', `${f} lists a noindex/draft page: ${u}`);
+    if (/thank-you|\/404\//.test(u)) E('sitemap', `must exclude ${u}`);
+    if (!/<lastmod>/.test(sm)) { E('sitemap', `${f}: no lastmod values`); break; }
+  }
+}
+if (fs.existsSync(path.join(dist, 'sitemap-index.xml'))) {
+  const idx = fs.readFileSync(path.join(dist, 'sitemap-index.xml'), 'utf8');
+  for (const loc of idx.match(/<loc>(.*?)<\/loc>/g) ?? []) {
+    const f = new URL(loc.replace(/<\/?loc>/g, '')).pathname.slice(1);
+    if (!fs.existsSync(path.join(dist, f))) E('sitemap', `index lists a missing file: ${f}`);
+  }
+}
+for (const need of ['robots.txt', 'llms.txt', 'menu.json', 'sitemap-index.xml']) if (!fs.existsSync(path.join(dist, need))) E('build', `missing ${need}`);
+
+for (const w of warn) console.warn('  ! ' + w);
+if (errors.length) { console.error(`\ncheck-seo FAILED (${errors.length}):`); fail(errors); process.exit(1); }
+console.log(`check-seo: OK (${pages.length} pages, ${pages.filter((p) => !p.noindex).length} indexable)`);

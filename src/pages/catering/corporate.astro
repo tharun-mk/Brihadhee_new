@@ -1,0 +1,61 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { facts } from '../../data/brand-facts';
+import { ok, telHref } from '../../lib/facts';
+import { cateringReady, cateringServiceSchema, listText, CATERING_CRUMB } from '../../lib/catering';
+
+const c = facts.catering;
+const path = '/catering/corporate/';
+const title = 'Corporate Catering in Chennai | Brihadhee, Anna Nagar';
+const description = "Daily vegetarian lunches and office event catering for companies in Chennai, from Brihadhee's Anna Nagar kitchen. Tell us your headcount for a quote.";
+const tel = telHref();
+const schema = [cateringServiceSchema(path, 'Corporate catering in Chennai', `Vegetarian daily office meals and office event catering for companies in ${facts.city}, cooked in ${facts.name}'s ${facts.locality} kitchen. Quotes on WhatsApp.`, true)];
+---
+<BaseLayout title={title} description={description} path={path} noindex={!cateringReady.corporate()} breadcrumbs={[CATERING_CRUMB, { name: 'Corporate', href: path }]} schema={schema}>
+  <div class="wrap py-6 max-w-3xl prose-b" style="margin-inline:auto">
+    <h1>Corporate catering in Chennai</h1>
+    <p class="text-lg">{facts.name} supplies vegetarian meals to companies in {facts.city}, for daily office lunches and for one-off office events. We cook in our {facts.locality} kitchen and deliver to your office. Tell us your headcount, location and meal times, and we will send you a plan and a quote on WhatsApp.</p>
+    {ok(c.dailyMeals) && <p>We already cook for {c.dailyMeals} people every working day for corporate clients.</p>}
+
+    <h2>What does corporate catering from {facts.name} cover?</h2>
+    <ul>
+      <li><strong>Daily meals for your team:</strong> lunch delivered to your office on working days.</li>
+      <li><strong>Office events:</strong> team lunches, celebrations and meetings{c.minimumGuests && <>, from {c.minimumGuests} people</>}.</li>
+      {c.corporateExtras.map((x) => <li>{x}</li>)}
+    </ul>
+
+    <h2>How many people can you feed?</h2>
+    <p>{c.minimumGuests && <>Orders start at {c.minimumGuests} people.</>}{ok(c.extraCorporateCapacitySentence) && <> {c.extraCorporateCapacitySentence}</>}{ok(c.dailyMeals) && <> Our kitchen already serves {c.dailyMeals} meals a day, so a team of 50 or of several hundred is routine for us.</>}</p>
+
+    <h2>Why a vegetarian caterer for an office?</h2>
+    <p>A vegetarian menu works for everyone in a mixed team, including colleagues who are vegetarian by practice and those who avoid meat on certain days. One menu means one order, no separate counters and no mix-ups.</p>
+
+    <h2>How does a daily lunch supply work?</h2>
+    <ol>
+      <li><strong>Tell us the basics:</strong> headcount, office address, lunch time, and any dishes or dietary needs.</li>
+      <li><strong>We send a plan:</strong> a menu and a quote on WhatsApp.</li>
+      <li><strong>Confirm and start.</strong>{ok(c.dailyConfirmSentence) && <> {c.dailyConfirmSentence}</>}</li>
+    </ol>
+
+    <h2>How is corporate catering priced?</h2>
+    <p>The price depends on the headcount, the menu, how many days a week you order, and whether you need service staff at your office. We quote after we know these details; there is no fixed per-plate price on this site.</p>
+
+    {c.clients.length > 0 && (
+      <>
+        <h2>Which companies do you cater for?</h2>
+        <p>Our corporate clients include {listText(c.clients)}.</p>
+      </>
+    )}
+
+    {c.areasServed.length > 0 && (
+      <>
+        <h2>Which areas do you deliver to?</h2>
+        <p>We deliver office meals in {listText(c.areasServed)}.</p>
+      </>
+    )}
+
+    <h2>How do we start?</h2>
+    <p>Send your headcount and office location through the <a href="/catering/quote/">quote form</a>{tel && <>, or call <a href={tel} data-event="call_click" data-label="catering-corporate">{facts.phone}</a></>}. Planning an office party or an offsite? See <a href="/catering/events/">event catering</a>. Comparing caterers? See how <a href="/catering/">{facts.name} catering</a> works.</p>
+    <p><a class="btn btn-primary" href="/catering/quote/" data-event="catering_quote_click" data-label="corporate">Get a catering quote</a></p>
+  </div>
+</BaseLayout>

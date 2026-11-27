@@ -1,0 +1,101 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { facts } from '../../data/brand-facts';
+import { ok, telHref } from '../../lib/facts';
+import { cateringReady, cateringServiceSchema, fromMin, listText, CATERING_CRUMB } from '../../lib/catering';
+
+const c = facts.catering;
+const path = '/catering/';
+const title = 'Vegetarian Catering in Chennai from 50 Guests | Brihadhee';
+const description = 'Brihadhee caters vegetarian South Indian food for offices and family events in Chennai, from 50 guests. Send your date and headcount for a quote.';
+const tel = telHref();
+const schema = [cateringServiceSchema(path, 'Vegetarian catering in Chennai', `Vegetarian South Indian catering for offices and family events in ${facts.city}, ${fromMin()}. Menu planning, cooking, delivery and optional service staff. Quotes on WhatsApp.`)];
+---
+<BaseLayout title={title} description={description} path={path} noindex={!cateringReady.hub()} breadcrumbs={[CATERING_CRUMB]} schema={schema}>
+  <div class="wrap py-6 max-w-3xl prose-b" style="margin-inline:auto">
+    <h1>Vegetarian catering in Chennai{c.minimumGuests && <>, from {c.minimumGuests} guests</>}</h1>
+    <p class="text-lg">{facts.name} caters vegetarian South Indian food for offices and family events in {facts.city}{c.minimumGuests && <>, from {c.minimumGuests} guests</>}. We cook in our {facts.locality} kitchen and handle the job end to end. Tell us your date, headcount and the dishes you want, and we will send you a quote on WhatsApp.</p>
+
+    <h2>Choose the kind of catering you need</h2>
+    <ul>
+      <li><a href="/catering/corporate/">Corporate catering</a>: daily meals for teams, and one-off office events.</li>
+      <li><a href="/catering/events/">Event catering</a>: birthdays, get-togethers and family events.</li>
+      <li><a href="/catering/small-functions/">Small functions</a>: gatherings of about 50 to 150 guests.</li>
+      <li><a href="/catering/weddings/">Weddings</a>: vegetarian South Indian food for the wedding day.</li>
+    </ul>
+    <p><a class="btn btn-primary" href="/catering/quote/" data-event="catering_quote_click" data-label="hub-top">Get a catering quote</a></p>
+
+    <h2>Who is {facts.name} catering for?</h2>
+    <p>{facts.name} caters for two kinds of customers. The first is companies that want good vegetarian meals for their teams, every day or for an event. The second is families planning a birthday, a get-together or a wedding who want food that tastes home-made, not mass-produced. Both get the same kitchen that runs our restaurant on {facts.streetAddress}, {facts.locality}.</p>
+
+    {c.minimumGuests && (
+      <>
+        <h2>What is the minimum catering order?</h2>
+        <p>Our catering starts at {c.minimumGuests} guests. For a smaller group, come and eat with us at the restaurant instead; see <a href="/events/group-dining/">group dining</a>.{ok(c.deliveryOnlyMinimumSentence) && <> {c.deliveryOnlyMinimumSentence}</>}</p>
+      </>
+    )}
+
+    <h2>Is the food vegetarian only?</h2>
+    <p>Yes. {facts.name} cooks vegetarian food only, at the restaurant and for catering. A vegetarian menu works for every guest at the table, including family members and colleagues who are vegetarian by practice.</p>
+
+    <h2>What food can you serve at our event?</h2>
+    <p>Our catering food comes from the same kitchen and the same Tamil home-style recipes as the restaurant.{c.dishes.length > 0 && <> Catering dishes include {listText(c.dishes)}.</>}</p>
+    {c.liveDosaCounter === true && (
+      <p>Build-your-own dosa is what {facts.name} is known for at the restaurant, where guests choose a batter, a topping, a stuffing and a garnish. At events we can run it as a live dosa counter, so each guest gets the dosa they want, made in front of them.</p>
+    )}
+    <p>You can see the restaurant's dishes on our <a href="/menu/">menu</a>. Read about <a href="/menu/dosa/">build-your-own dosa</a> and <a href="/menu/nellai-meals/">Nellai meals</a>.</p>
+
+    <h2>What does end-to-end catering include?</h2>
+    <p>End to end means we take care of the food from start to finish. We plan the menu with you, cook it in our kitchen and bring it to your venue.{c.serviceStaffOptional && <> If you want, our staff also serve it. You choose whether you need service staff when you ask for a quote.</>}{ok(c.setupSentence) && <> {c.setupSentence}</>}</p>
+
+    <h2>How much does catering cost?</h2>
+    <p>We do not publish a per-plate price, because two events rarely need the same thing. Your quote depends on:</p>
+    <ul>
+      <li><strong>Headcount:</strong> the number of guests.</li>
+      <li><strong>Menu:</strong> which dishes, and how many.</li>
+      <li><strong>Lunch or dinner.</strong></li>
+      <li><strong>Occasion:</strong> a daily office lunch and a wedding need different menus.</li>
+      <li><strong>Service staff:</strong> whether you want them.</li>
+      <li><strong>Venue:</strong> where in {facts.city} the food has to go.</li>
+    </ul>
+    <p>Send these details and we reply with a quote{ok(c.replyTime) && <> {c.replyTime}</>}.</p>
+
+    <h2>How far ahead should I book?</h2>
+    <p>Book as soon as your date is fixed. Wedding and festival dates fill first, especially in the Thai month from mid-January.{ok(c.leadTimeSentence) && <> {c.leadTimeSentence}</>}</p>
+
+    <h2>What should I tell a caterer to get an accurate quote?</h2>
+    <p>Six details decide almost every catering quote. Send them all at once and you get a firm price faster:</p>
+    <ul>
+      <li><strong>The occasion:</strong> an office lunch, a birthday and a wedding need different menus.</li>
+      <li><strong>The date and time:</strong> lunch or dinner, and when the food must be ready.</li>
+      <li><strong>The number of guests:</strong> the biggest single driver of cost.</li>
+      <li><strong>The dishes you must have:</strong> the two or three items your family or team will not do without.</li>
+      <li><strong>Service:</strong> whether you want staff to serve, or the food delivered ready to serve.</li>
+      <li><strong>The venue:</strong> the area and the type of place, such as a home, an office or a hall.</li>
+    </ul>
+    <p>Our <a href="/catering/quote/">quote form</a> asks for exactly these, so nothing is missed.</p>
+
+    {c.areasServed.length > 0 && (
+      <>
+        <h2>Which areas of {facts.city} do you cater in?</h2>
+        <p>We cook in {facts.locality} and cater in {listText(c.areasServed)}.</p>
+      </>
+    )}
+
+    {ok(c.dailyMeals) && (
+      <div class="card mt-6">
+        <p class="font-semibold" style="margin:0">{c.dailyMeals} meals a day</p>
+        <p style="margin:.4rem 0 0">{facts.name}'s kitchen already cooks for {c.dailyMeals} people every day for corporate clients, so your function is in experienced hands.</p>
+      </div>
+    )}
+
+    <h2>How do I get a catering quote?</h2>
+    <ol>
+      <li>Open the <a href="/catering/quote/">quote form</a> and fill in six details: event type, date, headcount, lunch or dinner, the dishes you must have, and whether you need service staff.</li>
+      <li>Tap <strong>Send on WhatsApp</strong>. WhatsApp opens with your answers filled in. Check them and send.</li>
+      <li>Our catering team replies with a menu and a quote.</li>
+    </ol>
+    {tel && <p>Prefer to call? Ring <a href={tel} data-event="call_click" data-label="catering-hub">{facts.phone}</a>.</p>}
+    <p><a class="btn btn-primary" href="/catering/quote/" data-event="catering_quote_click" data-label="hub-bottom">Get a catering quote</a></p>
+  </div>
+</BaseLayout>

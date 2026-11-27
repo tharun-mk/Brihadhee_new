@@ -1,15 +1,21 @@
 ---
-/**
- * /faq/: brand answers no other page owns (keyword plan 4.2 and 4.7), including the
- * one permitted "breakfast" question (config/seo-gates.ts NEGATIVE_FAQ_QUESTION),
- * plus an index that links to every page's own Q&A block. One Q&A per route: the
- * hub never repeats a spoke's question (src/lib/answers.js qaRoute).
- */
-import SpokePage from "../components/SpokePage.astro";
-import { faqHubPage } from "../data/spokes.js";
-import TamilSummary from "../components/TamilSummary.astro";
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FAQ from '../components/FAQ.astro';
+import { resolvedFaqs } from '../data/faq';
+import { faqSchema } from '../lib/schema';
+const all = resolvedFaqs().filter((f) => f.pages.includes('/faq/'));
+const groups = [...new Set(all.map((f) => f.group))];
 ---
-
-<SpokePage page={faqHubPage}>
-  <TamilSummary />
-</SpokePage>
+<BaseLayout title="FAQ | Brihadhee, South Indian Restaurant, Anna Nagar" description="Answers about Brihadhee in Anna Nagar, Chennai: location, menu, dosa, mini tiffin, Nellai meals and filter coffee." path="/faq/" noindex={all.length === 0} breadcrumbs={[{ name: 'FAQ', href: '/faq/' }]} schema={[faqSchema(all)]}>
+  <div class="wrap py-6 max-w-3xl" style="margin-inline:auto">
+    <h1>Frequently asked questions</h1>
+    <p class="mt-3">Quick answers about Brihadhee in Anna Nagar, Chennai.</p>
+    {groups.map((g) => (
+      <section>
+        <h2>{g}</h2>
+        <FAQ faqs={all.filter((f) => f.group === g)} open />
+      </section>
+    ))}
+    <p class="mt-8"><a class="btn btn-primary" href="/menu/">See the menu</a> <a class="btn" href="/contact/">Ask us something else</a></p>
+  </div>
+</BaseLayout>

@@ -1,137 +1,44 @@
 ---
-import {
-  site,
-  hasPhone,
-  hasWhatsApp,
-  hasEmail,
-  hasHoursText,
-  socialLinks,
-  telHref,
-  whatsappHref,
-  emailHref,
-  ROUTES,
-  href,
-} from "../data/site.js";
-import Icon from "./Icon.astro";
-import { getFact } from "../data/entity-truth.ts";
-
-// The confirmed Maps listing and table booking partners belong to the restaurant.
-const listings = [
-  { label: "Google Maps", href: getFact("mapUrl") },
-  ...getFact("bookingLinks").map((b) => ({ label: `Book on ${b.label}`, href: b.url })),
-];
-
-const { homeBase = "", addressHref = "" } = Astro.props;
-const link = (href) => (href.startsWith("#") ? `${homeBase}${href}` : href);
+import { facts } from '../data/brand-facts';
+import { ok, fullAddress, hoursText, telHref } from '../lib/facts';
+import { cateringReady } from '../lib/catering';
+const showCatering = cateringReady.hub(); // link appears once the catering hub is indexable
 const year = new Date().getFullYear();
-const base = import.meta.env.BASE_URL.endsWith("/")
-  ? import.meta.env.BASE_URL
-  : `${import.meta.env.BASE_URL}/`;
-const address = site.address;
-const isCateringPage = Boolean(Astro.locals.contact);
+const alsoSearched = facts.alternateNames.filter((n) => !/restaurant|anna nagar/i.test(n));
+const hrs = hoursText();
+const tel = telHref();
 ---
-
-<footer class="site-footer on-dark">
-  <div class="container">
-    <div class="footer__grid">
-      <div class="footer__about">
-        <a class="brand" href={link("#top")} aria-label={`${site.name} — back to top`}>
-          <img
-            class="brand__logo"
-            src={`${base}images/logo.webp`}
-            width="594"
-            height="420"
-            alt={site.name}
-            loading="lazy"
-            decoding="async"
-          />
-        </a>
-        <p>{site.shortDescription}</p>
-        {/* One-line English explanations of the Tamil dish terms used across the site. */}
-        <p class="footer__glossary">
-          <span lang="ta-Latn">Sodhi</span>: a Tirunelveli coconut milk stew. <span lang="ta-Latn">Ulundhu kali</span>: a sweet
-          made with palm jaggery. <span lang="ta-Latn">Paanai parotta</span>: parotta and salna slow-cooked in a sealed pot.
-        </p>
-
-        {
-          socialLinks.length > 0 && (
-            <div class="footer__social">
-              {socialLinks.map((link) => (
-                <a
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`${site.name} on ${link.key}`}
-                >
-                  <Icon name={link.key} size={18} />
-                </a>
-              ))}
-            </div>
-          )
-        }
-      </div>
-
-      <nav id="footer-explore" aria-labelledby="footer-explore-title" tabindex="-1">
-        <p class="footer__title" id="footer-explore-title">Explore</p>
-        <ul class="footer__links" role="list">
-          <li><a href={href(ROUTES.home)}>{site.name} restaurant, Anna Nagar East</a></li>
-          <li><a href={`${href(ROUTES.about)}#facts`}>Verified {site.name} facts</a></li>
-          {site.footerLinks.map((item) => (
-            <li><a href={link(item.href)}>{item.label}</a></li>
-          ))}
-          <li><a href={`${base}book-a-table/`}>Book a Table</a></li>
-          <li><a href={href(ROUTES.offers)}>Offers</a></li>
-          <li><a href={href(ROUTES.photos)}>Photos</a></li>
-          <li><a href={href(ROUTES.familyDining)}>Family Dining</a></li>
-          <li><a href={href(ROUTES.faq)}>FAQ</a></li>
-          <li><a href={`${base}guides/what-are-nellai-meals/`}>Guide: What Are Nellai Meals?</a></li>
-          <li><a href={`${base}whats-new/`}>What's New</a></li>
-          <li><a href={`${base}seasonal/karthigai-ayyappa-pure-veg/`}>Karthigai &amp; Ayyappa Mala</a></li>
-          <li><a href={`${base}privacy/`}>Privacy</a></li>
-        </ul>
-      </nav>
-
-      <div>
-        <p class="footer__title">Visit</p>
-        {addressHref ? (
-          <p class="footer__address"><a href={addressHref}>Restaurant address and directions</a></p>
-        ) : (
-          <address class="footer__address">
-            {address.line1}<br />
-            {address.line2}<br />
-            {address.city}, {address.state}{address.postalCode ? ` ${address.postalCode}` : ""}
-          </address>
-        )}
-        {
-          hasHoursText && (
-            <p class="footer__hours">{site.hours.summary}</p>
-          )
-        }
-      </div>
-
-      <div>
-        <p class="footer__title">Restaurant contact</p>
-        <ul class="footer__links" role="list">
-          {hasPhone && <li><a href={telHref}>{site.contact.phone}</a></li>}
-          {hasWhatsApp && <li><a href={whatsappHref}>WhatsApp</a></li>}
-          {hasEmail && <li><a href={emailHref}>{site.contact.email}</a></li>}
-          {isCateringPage && <li><a href={href(ROUTES.eventCatering)}>Catering contact and enquiries</a></li>}
-          <li>
-            <a href={site.maps.directions} target="_blank" rel="noopener" data-event="directions_click">
-              Get directions
-            </a>
-          </li>
-          {listings.map((l) => (
-            <li><a href={l.href} target="_blank" rel="noopener">{l.label}</a></li>
-          ))}
-        </ul>
-      </div>
+<footer class="bg-leaf-dark text-cream mt-16" style="background:var(--color-leaf-dark);color:var(--color-cream)">
+  <div class="wrap py-10 grid gap-8 md:grid-cols-3">
+    <div>
+      <p style="font-family:'Fraunces Variable',serif;font-size:1.4rem;font-weight:700;color:#fff;margin:0">{facts.name}</p>
+      <p class="mt-2">{fullAddress()}</p>
+      {hrs && <p class="mt-2">Open {hrs}.</p>}
+      {tel && <p class="mt-2"><a href={tel} style="color:#fff" data-event="call_click" data-label="footer">{facts.phone}</a></p>}
     </div>
-
-    <div class="footer__bottom">
-      <p>© {year} {site.name}. All rights reserved.</p>
-      <p>South Indian restaurant · Anna Nagar East, Chennai</p>
-      <p><a href={link("#top")}>Back to top ↑</a></p>
+    <nav aria-label="Footer">
+      <ul style="list-style:none;margin:0;padding:0" class="grid gap-1">
+        <li><a style="color:#fff" href="/menu/">Menu</a></li>
+        <li><a style="color:#fff" href="/order/">Order</a></li>
+        <li><a style="color:#fff" href="/book-a-table/">Book a table</a></li>
+        {showCatering && <li><a style="color:#fff" href="/catering/">Catering</a></li>}
+        <li><a style="color:#fff" href="/location/anna-nagar/">Location</a></li>
+        <li><a style="color:#fff" href="/gallery/">Gallery</a></li>
+        <li><a style="color:#fff" href="/reviews/">Reviews</a></li>
+        <li><a style="color:#fff" href="/faq/">FAQ</a></li>
+        <li><a style="color:#fff" href="/about/">About</a></li>
+        <li><a style="color:#fff" href="/contact/">Contact</a></li>
+      </ul>
+    </nav>
+    <div class="text-sm">
+      <p>Also searched as {alsoSearched.join(', ')}.</p>
+      <p class="mt-2">{facts.name} is a restaurant in {facts.locality}, {facts.city}. It is not connected with Brihadeeswarar Temple, Thanjavur.</p>
+      <p class="mt-2">
+        <a style="color:#fff" href="/privacy/">Privacy</a> ·
+        <a style="color:#fff" href="/terms/">Terms</a> ·
+        <a style="color:#fff" href="/accessibility/">Accessibility</a>
+      </p>
+      <p class="mt-2">© {year} {facts.name}</p>
     </div>
   </div>
 </footer>

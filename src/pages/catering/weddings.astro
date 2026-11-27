@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { facts } from '../../data/brand-facts';
+import { ok } from '../../lib/facts';
+import { cateringReady, cateringServiceSchema, listText, CATERING_CRUMB } from '../../lib/catering';
+
+const c = facts.catering;
+const path = '/catering/weddings/';
+const title = 'Vegetarian Wedding Catering in Chennai | Brihadhee';
+const description = 'Vegetarian South Indian wedding catering in Chennai from Brihadhee, Anna Nagar. We plan, cook and serve. Send your date and guest count for a quote.';
+const schema = [cateringServiceSchema(path, 'Vegetarian wedding catering in Chennai', `Vegetarian South Indian wedding catering in ${facts.city}: menu planning with the family, cooking in ${facts.name}'s ${facts.locality} kitchen and service at the venue.`)];
+---
+<BaseLayout title={title} description={description} path={path} noindex={!cateringReady.weddings()} breadcrumbs={[CATERING_CRUMB, { name: 'Weddings', href: path }]} schema={schema}>
+  <div class="wrap py-6 max-w-3xl prose-b" style="margin-inline:auto">
+    <h1>Vegetarian wedding catering in Chennai</h1>
+    <p class="text-lg">{facts.name} caters vegetarian South Indian food for weddings in {facts.city}. We plan the menu with your family, cook it in our {facts.locality} kitchen and serve it at your venue. Tell us the date, the number of guests and the dishes you must have, and we will send a quote on WhatsApp.</p>
+
+    <h2>Which wedding functions can you cater?</h2>
+    <p>The wedding meal itself.{c.weddingFunctions.length > 0 && <> We also cater the {listText(c.weddingFunctions.map((f) => f.toLowerCase()))}.</>}</p>
+
+    <h2>What is on a South Indian wedding menu?</h2>
+    <p>A traditional Tamil wedding lunch usually includes rice, sambar, rasam, a poriyal (dry vegetable), a kootu (lentil-and-vegetable dish), appalam, a sweet such as payasam, and curd or buttermilk to finish. Families add their own favourites. Tell us the dishes you must have on the quote form and we build the menu around them.{c.dishes.length > 0 && <> Our catering dishes include {listText(c.dishes)}.</>}</p>
+
+    <h2>Do you serve non-vegetarian food?</h2>
+    <p>No. {facts.name} cooks vegetarian food only.</p>
+
+    {c.liveDosaCounter === true && (
+      <>
+        <h2>Can you run a live dosa counter at a wedding?</h2>
+        <p>Yes. Our <a href="/menu/dosa/">build-your-own dosa</a> works as a live counter at a reception: guests choose a batter, a topping, a stuffing and a garnish, and watch it being made.</p>
+      </>
+    )}
+
+    {ok(c.maxGuestsPerDay) && (
+      <>
+        <h2>How many guests can you cater for?</h2>
+        <p>We can cater for up to {c.maxGuestsPerDay} guests on one day.</p>
+      </>
+    )}
+
+    <h2>When should we book wedding catering?</h2>
+    <p>As soon as you have a date. In Tamil Nadu the Thai month, from mid-January, is peak wedding season and good dates fill early.{ok(c.leadTimeSentence) && <> {c.leadTimeSentence}</>}</p>
+
+    <h2>How is wedding catering priced?</h2>
+    <p>By guest count, menu, number of meals, service staff and venue. We send a full quote after you share these details; there are no fixed per-plate prices on this site.</p>
+
+    <p>Planning a smaller function before the wedding? See <a href="/catering/small-functions/">small function catering</a>. For everything else, see <a href="/catering/">{facts.name} catering</a>.</p>
+    <p><a class="btn btn-primary" href="/catering/quote/" data-event="catering_quote_click" data-label="weddings">Get a catering quote</a></p>
+  </div>
+</BaseLayout>

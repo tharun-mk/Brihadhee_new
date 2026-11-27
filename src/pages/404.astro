@@ -1,35 +1,10 @@
 ---
-/** 404: helpful links back into the site. noindex; never in the sitemap. */
-import Base from "../layouts/Base.astro";
-import Nav from "../components/Nav.astro";
-import Footer from "../components/Footer.astro";
-import { getFact } from "../data/entity-truth.ts";
-import { site, telHref } from "../data/site.js";
-import { pageGraph, HOME_CRUMBS } from "../lib/schema.js";
-
-const base = import.meta.env.BASE_URL.endsWith("/") ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
-const name = getFact("name");
-const title = `Page not found | ${name}, Anna Nagar East`;
-const description = `This page does not exist. See the ${name} menu, location and booking pages.`;
-const schema = pageGraph({ path: "/404/", title, description, crumbs: HOME_CRUMBS }); // no trail: /404/ is not a real URL
+import BaseLayout from '../layouts/BaseLayout.astro';
 ---
-
-<Base title={title} description={description} path="/404/" schema={schema} noindex>
-  <Nav homeBase={base} />
-  <main id="main" tabindex="-1">
-    <section class="section page-head" id="top">
-      <div class="container">
-        <h1 class="section__title page-head__title">Sorry, this page isn't here</h1>
-        <p class="section__lead">Try one of these instead:</p>
-        <ul>
-          <li><a href={`${base}menu/`}>Menu and prices</a></li>
-          <li><a href={`${base}about/`}>Address, timings and directions</a></li>
-          <li><a href={`${base}reserve-table/`}>Reserve a table online</a></li>
-          <li><a href={`${base}book-a-table/`}>Book a table</a></li>
-          <li><a href={telHref}>Call {site.contact.phone}</a></li>
-        </ul>
-      </div>
-    </section>
-  </main>
-  <Footer homeBase={base} />
-</Base>
+<BaseLayout title="Page Not Found | Brihadhee, Anna Nagar" description="This page could not be found. Go to the Brihadhee menu, order page or location in Anna Nagar, Chennai." path="/404/" noindex>
+  <div class="wrap py-10">
+    <h1>We could not find that page</h1>
+    <p class="mt-3 text-lg">Try one of these instead.</p>
+    <p class="mt-5 flex flex-wrap gap-3"><a class="btn btn-primary" href="/menu/">Menu</a> <a class="btn" href="/order/">Order</a> <a class="btn" href="/location/anna-nagar/">Location</a> <a class="btn" href="/">Home</a></p>
+  </div>
+</BaseLayout>
